@@ -6,80 +6,130 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
+import { useAuth } from "../hooks/useAuth";
+import MatchingService from "../services/MatchingService";
 
-const matches = {
-  topMatches: [
-    {
-      name: "Selina",
-      match: "97%",
-      color: "#f4a5a5",
-    },
-    {
-      name: "Claire",
-      match: "94%",
-      color: "#f08080",
-    },
-  ],
-  otherMatches: [
-    {
-      name: "Gianna",
-      match: "90%",
-      color: "#f4a5a5",
-    },
-    {
-      name: "Maggie",
-      match: "85%",
-      color: "#f08080",
-    },
-  ],
-};
 
 export default function MatchScreen({ navigation }) {
+    const [matches, setMatches] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
+
+    useEffect(() => {
+        loadMatches();
+      }, []);
+    
+      const loadMatches = async () => {
+        try {
+          setLoading(true);
+          const userMatches = await MatchingService.getUserMatches(user.uid);
+          const topMatches = userMatches.filter(match => match.matchPercentage >= 90);
+          const otherMatches = userMatches.filter(match => match.matchPercentage < 90);
+          
+          setMatches({ topMatches, otherMatches });
+        } catch (error) {
+          Alert.alert("Error", "Failed to load matches: " + error.message);
+          console.error("Error loading matches:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+      const handleMatchPress = (match) => {
+        navigation.navigate("MatchDetailScreen", { match });
+      };
+    
+      if (loading) {
+        return (
+          <View style={[styles.container, styles.centerContent]}>
+            <ActivityIndicator size="large" color="#ff5a5f" />
+            <Text style={styles.loadingText}>Loading your matches...</Text>
+          </View>
+        );
+      }
+    
+      const hasMatches = matches.topMatches?.length > 0 || matches.otherMatches?.length > 0;
+    
   return (
     <View style={styles.container}>
         <Image source={require("../assets/icon.png")} style={styles.logo} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
+      {hasMatches ? (
+          <>
         <Text style={styles.checkmark}>✔️</Text>
         <Text style={styles.title}>SUCCESS! You have been matched with other students!</Text>
 
         {/* Top Matches */}
+        {matches.topMatches?.length > 0 && (
+              <>
         <Text style={styles.sectionTitle}>Top matches:</Text>
         {matches.topMatches.map((match, index) => (
           <TouchableOpacity
             key={index}
             style={[styles.card, { backgroundColor: match.color }]}
-            onPress={() => navigation.navigate("MatchDetailScreen")}
+            onPress={() => handleMatchPress(match)}
           >
             <Image
               source={require("../assets/selina.png")}
               style={styles.avatar}
             />
             <View style={styles.textContainer}>
-              <Text style={styles.name}>{match.name} ({match.match} match)</Text>
+              <Text style={styles.name}>
+              {match.matchedUser?.displayName || "Anonymous"} ({match.matchPercentage}% match)
+              </Text>
               <Text style={styles.description}>
-                Hello! I am a first year UBC student and I would love to connect with you to share a pack of carrots!
+                Hello! I am a {match.matchedUser?.year || "UBC"} student and I would love to connect with you to share {match.itemName}!
               </Text>
             </View>
           </TouchableOpacity>
         ))}
+        </>
+            )}
 
         {/* Other Matches */}
+        {matches.otherMatches?.length > 0 && (
+              <>
         <Text style={styles.sectionTitle}>Other matches:</Text>
         {matches.otherMatches.map((match, index) => (
-          <View key={index} style={[styles.card, { backgroundColor: match.color }]}>
+            <TouchableOpacity
+                    key={match.id}
+                    style={[styles.card, { backgroundColor: "#f08080" }]}
+                    onPress={() => handleMatchPress(match)}
+                  >
             <Image
               source={require("../assets/claire.png")}
               style={styles.avatar}
             />
             <View style={styles.textContainer}>
-              <Text style={styles.name}>{match.name} ({match.match} match)</Text>
-              <Text style={styles.description}>
-                Hello! I am a first year UBC student and I would love to connect with you to share a pack of carrots!
+              <Text style={styles.name}>
+              {match.matchedUser?.displayName || "Anonymous"} ({match.matchPercentage}% match)
               </Text>
+              <Text style={styles.description}>
+                Hello! I am a {match.matchedUser?.year || "UBC"} student and I would love to connect with you to share {match.itemName}!   
+                </Text>
             </View>
-          </View>
+            </TouchableOpacity>
         ))}
+        </>
+            )}
+          </>
+        ) : (
+            <View style={styles.noMatchesContainer}>
+              <Text style={styles.noMatchesTitle}>No matches yet!</Text>
+              <Text style={styles.noMatchesText}>
+                Submit a food request to get matched with other students.
+              </Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => navigation.navigate("ChooseItemsScreen")}
+              >
+                <Text style={styles.buttonText}>Create Request</Text>
+              </TouchableOpacity>
+            </View>
+          )}
       </ScrollView>
 
       {/* Bottom Navigation */}

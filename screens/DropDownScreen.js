@@ -1,19 +1,42 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from "react-native";
 
+const foodItems = [
+    { name: "Avocados", category: "Fresh Produce", image: require("../assets/avocado.jpg") },
+    { name: "Bananas", category: "Fresh Produce", image: require("../assets/banana.jpg") },
+    { name: "Eggs", category: "Protein", image: require("../assets/eggs.jpg") },
+    { name: "Chicken Breast", category: "Protein", image: require("../assets/chicken.jpg") },
+    { name: "Milk", category: "Dairy", image: require("../assets/milk.jpg") },
+    { name: "Yogurt", category: "Dairy", image: require("../assets/yogurt.jpg") },
+  ];
+
 export default function DropDownScreen({ navigation }) {
   const [selectedItem, setSelectedItem] = useState(null); // Track selected item
 
   const handleItemPress = (itemName) => {
     console.log(`${itemName} selected!`);
-    setSelectedItem(itemName); // Update selected item
-    // You can navigate to another screen or perform any action here
-    // Example: navigation.navigate("ItemDetails", { item: itemName });
+    setSelectedItem(itemName); 
   };
 
-  const getItemStyle = (itemName) => {
-    return itemName === selectedItem ? [styles.item, styles.selectedItem] : styles.item;
+  const handleAddItem = () => {
+    if (selectedItem) {
+      navigation.navigate("ChooseItemsScreen", { selectedItem });
+    } else {
+      Alert.alert("Error", "Please select an item first");
+    }
   };
+
+  const getItemStyle = (item) => {
+    return selectedItem?.name === item.name ? [styles.item, styles.selectedItem] : styles.item;
+  };
+
+  const groupedItems = foodItems.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {});
 
   return (
     <View style={styles.container}>
@@ -24,84 +47,27 @@ export default function DropDownScreen({ navigation }) {
         <Text style={styles.title}>What are you craving today?</Text>
 
         {/* Fresh Produce */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Fresh Produce</Text>
-          <TouchableOpacity
-            style={getItemStyle("Avocados")}
-            onPress={() => handleItemPress("Avocados")}
-          >
-            <Image
-              source={require("../assets/avocado.jpg")}
-              style={styles.itemImage}
-            />
-            <Text style={styles.itemText}>Avocados</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={getItemStyle("Bananas")}
-            onPress={() => handleItemPress("Bananas")}
-          >
-            <Image
-              source={require("../assets/banana.jpg")}
-              style={styles.itemImage}
-            />
-            <Text style={styles.itemText}>Bananas</Text>
-          </TouchableOpacity>
-        </View>
+        {Object.entries(groupedItems).map(([category, items]) => (
+          <View key={category} style={styles.section}>
+            <Text style={styles.sectionTitle}>{category}</Text>
+            {items.map((item) => (
+              <TouchableOpacity
+                key={item.name}
+                style={getItemStyle(item)}
+                onPress={() => handleItemPress(item)}
+              >
+                <Image source={item.image} style={styles.itemImage} />
+                <Text style={styles.itemText}>{item.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ))}
 
-        {/* Protein */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Protein</Text>
-          <TouchableOpacity
-            style={getItemStyle("Eggs")}
-            onPress={() => handleItemPress("Eggs")}
-          >
-            <Image
-              source={require("../assets/eggs.jpg")}
-              style={styles.itemImage}
-            />
-            <Text style={styles.itemText}>Eggs</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={getItemStyle("Chicken Breast")}
-            onPress={() => handleItemPress("Chicken Breast")}
-          >
-            <Image
-              source={require("../assets/chicken.jpg")}
-              style={styles.itemImage}
-            />
-            <Text style={styles.itemText}>Chicken Breast</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Dairy */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dairy</Text>
-          <TouchableOpacity
-            style={getItemStyle("Milk")}
-            onPress={() => handleItemPress("Milk")}
-          >
-            <Image
-              source={require("../assets/milk.jpg")}
-              style={styles.itemImage}
-            />
-            <Text style={styles.itemText}>Milk</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={getItemStyle("Yogurt")}
-            onPress={() => handleItemPress("Yogurt")}
-          >
-            <Image
-              source={require("../assets/yogurt.jpg")}
-              style={styles.itemImage}
-            />
-            <Text style={styles.itemText}>Yogurt</Text>
-          </TouchableOpacity>
-        </View>
 
         {/* Add Item Button */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => navigation.navigate("ChooseItemsScreen")}
+          onPress={handleAddItem}
         >
           <Text style={styles.buttonText}>Add Item</Text>
         </TouchableOpacity>

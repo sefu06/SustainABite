@@ -10,7 +10,10 @@ import {
   Dimensions,
   Image,
   Linking,
+  Alert,
 } from "react-native";
+import { useAuth } from "../hooks/useAuth";
+import FoodRequestService from "../services/FoodRequestService";
 
 const handleJoinPress = () => {
     Linking.openURL("https://www.foodstash.ca/");
@@ -18,10 +21,59 @@ const handleJoinPress = () => {
 
 export default function ChooseItemsScreen({ navigation }) {
   const [selectedNumber, setSelectedNumber] = useState("");
-  const totalItemsTraded = 12;
-  const progress = 0.6;
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { user, userData } = useAuth();
 
-  
+  const totalItemsTraded = userData?.totalItemsTraded || 0;
+  const progress = Math.min(totalItemsTraded / 20, 1);
+
+  const handleSubmitRequest = async () => {
+    if (!selectedItem) {
+      Alert.alert("Error", "Please select an item first");
+      navigation.navigate("DropDown");
+      return;
+    }
+
+    if (!selectedNumber || selectedNumber <= 0) {
+      Alert.alert("Error", "Please enter a valid number of people to share with");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const requestData = {
+        itemName: selectedItem.name,
+        category: selectedItem.category,
+        shareWith: parseInt(selectedNumber),
+        description: `Looking to share ${selectedItem.name} with ${selectedNumber} people`
+      };
+
+      await FoodRequestService.createFoodRequest(user.uid, requestData);
+      
+      // Navigate to confirmation screen
+      navigation.navigate("ShoppingCartConfirmation");
+    } catch (error) {
+      Alert.alert("Error", "Failed to submit request: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Listen for selected item from DropDown screen
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Get selected item from navigation params if available
+      const item = navigation.getState()?.routes?.find(route => route.name === 'DropDown')?.params?.selectedItem;
+      if (item) {
+        setSelectedItem(item);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+
   return (
     <View style={styles.screen}>
         <View style={styles.header}>
@@ -33,7 +85,7 @@ export default function ChooseItemsScreen({ navigation }) {
       {/* Scrollable Content */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
-        <Text style={styles.bigTitle}>~ Welcome back ~</Text>
+        <Text style={styles.bigTitle}>~ Welcome back {userData?.displayName || 'User'} ~</Text>
           {/* Dashboard */}
           <View style={styles.dashboard}>
             <Text style={styles.dashboardTitle}>
@@ -53,12 +105,21 @@ export default function ChooseItemsScreen({ navigation }) {
           {/* Request Form */}
           <Text style={styles.mediumTitle}>Request a new item</Text>
           <View style={styles.dashboard}>
+          {selectedItem ? (
+              <View style={styles.selectedItemContainer}>
+                <Text style={styles.dashboardTitle}>Selected: {selectedItem.name}</Text>
+                <Text style={styles.categoryText}>Category: {selectedItem.category}</Text>
+              </View>
+            ) : (
             <Text style={styles.dashboardTitle}>What item do you want to buy?</Text>
+        )}
             <TouchableOpacity
                 style={styles.button}
                 onPress={() => navigation.navigate("DropDown")}
             >
-                <Text style={styles.buttonText}>Choose your items</Text>
+                <Text style={styles.buttonText}>
+                {selectedItem ? "Change Item" : "Choose your items"}
+              </Text>
             </TouchableOpacity>
 
             <Text style={styles.dashboardTitle}>How many people would you like to share with?</Text>
@@ -72,10 +133,12 @@ export default function ChooseItemsScreen({ navigation }) {
             />
 
             <TouchableOpacity
-                style={styles.button}
-                onPress={() => navigation.navigate("ShoppingCartConfirmation")}
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleSubmitRequest}
+                disabled={loading}
+                // onPress={() => navigation.navigate("ShoppingCartConfirmation")}
             >
-                <Text style={styles.buttonText}>Submit your request</Text>
+                <Text style={styles.buttonText}>{loading ? "Submitting..." : "Submit your request"}</Text>
             </TouchableOpacity>
           </View>
 

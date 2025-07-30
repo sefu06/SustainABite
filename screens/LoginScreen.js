@@ -6,16 +6,50 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Alert,
 } from "react-native";
+import { useAuth } from "../hooks/useAuth";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useAuth();
 
-  const handleLogin = () => {
-    // Here you would normally authenticate the user
-    navigation.navigate("ChooseItemsScreen");
+  const handleLogin = async() => {
+    if (!email || !password) {
+        Alert.alert("Error", "Please fill in all fields");
+        return;
+      }
+      setError(true);
+    try {
+      await login(email, password);
+      navigation.navigate("ChooseItemsScreen");
+    } catch (error) {
+        Alert.alert("Login Error", error.message);
+      } finally {
+        setError(false);
+      }
   };
+
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await register(email, password, "New User");
+      navigation.navigate("ChooseItemsScreen");
+    } catch (error) {
+        setError(error.message);
+      Alert.alert("Signup Error", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -40,12 +74,12 @@ export default function LoginScreen({ navigation }) {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleLogin} disabled={loading}>
+        <Text style={styles.buttonText}>{loading ? "Logging in..." : "Login"}</Text>
       </TouchableOpacity>
 
       <Text style={styles.title}>Don't have an account yet?</Text>
-      <TouchableOpacity style={styles.signUpContainer} onPress={handleLogin}>
+      <TouchableOpacity style={styles.signUpContainer} onPress={handleSignUp} disabled={loading}>
         <Text style={styles.signUp}>Sign up</Text>
       </TouchableOpacity>
     </View>
@@ -103,5 +137,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textDecorationLine: "underline",
     marginBottom: 24,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });

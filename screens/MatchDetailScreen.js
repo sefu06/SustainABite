@@ -6,20 +6,70 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Linking } from "react-native";
+import { useAuth } from "../hooks/useAuth";
+import MatchingService from "../services/MatchingService";
+import AuthService from "../services/AuthService";
 
 const handleJoinPress = () => {
   Linking.openURL("https://www.foodstash.ca/");
 };
 
-export default function MatchDetailScreen({ navigation }) {
+export default function MatchDetailScreen({ navigation, route }) {
+    const [matchData, setMatchData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const { user, userData, updateUserData } = useAuth();
+  const match = route.params?.match;
+
+  useEffect(() => {
+    if (match) {
+      setMatchData(match);
+    }
+  }, [match]);
+
+  const handleAcceptMatch = async () => {
+    try {
+      setLoading(true);
+      
+      // Accept the match
+      await MatchingService.acceptMatch(matchData.id);
+      
+      // Update user's total items traded
+      const newTotal = (userData?.totalItemsTraded || 0) + 1;
+      await updateUserData(user.uid, { totalItemsTraded: newTotal });
+      
+      Alert.alert(
+        "Match Accepted!",
+        "You have successfully connected with your match. Check your Instagram for further communication!",
+        [{ text: "OK", onPress: () => navigation.navigate("ChooseItemsScreen") }]
+      );
+    } catch (error) {
+      Alert.alert("Error", "Failed to accept match: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!matchData) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Loading match details...</Text>
+      </View>
+    );
+  }
+
+  const matchedUser = matchData.matchedUser;
+
   return (
     <View style={styles.container}>
       <Image source={require("../assets/icon.png")} style={styles.logo} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.checkmark}>✔️</Text>
-        <Text style={styles.title}>You have matched with Selina!</Text>
+        <Text style={styles.title}>
+        You have matched with {matchedUser?.displayName || "a student"}!
+        </Text>
 
         {/* Match Card */}
         <View style={styles.card}>
@@ -28,10 +78,10 @@ export default function MatchDetailScreen({ navigation }) {
             style={styles.avatar}
           />
           <View style={styles.textContainer}>
-            <Text style={styles.name}>Selina</Text>
+            <Text style={styles.name}>{matchedUser?.displayName || "Anonymous"}</Text>
             <Text style={styles.description}>
-              Hello! I am a first year UBC student and I would love to connect
-              with you to share a pack of grapes!
+                Hello! I am a {matchedUser?.year || "UBC"} student and I would love to connect
+                with you to share {matchData.itemName}!
             </Text>
           </View>
         </View>
@@ -41,7 +91,7 @@ export default function MatchDetailScreen({ navigation }) {
           {/* Contact Info */}
           <View style={styles.sectionLeft}>
             <Text style={styles.sectionTitle}>Contact info:</Text>
-            <Text style={styles.handle}>@ubcstudent123</Text>
+            <Text style={styles.handle}>@{matchedUser?.instagramHandle || "ubcstudent123"}</Text>
             <TouchableOpacity style={styles.instagramButton}>
               <Text style={styles.buttonText}>Instagram</Text>
             </TouchableOpacity>
@@ -51,10 +101,24 @@ export default function MatchDetailScreen({ navigation }) {
           <View style={styles.sectionRight}>
             <Text style={styles.sectionTitle}>Specific Requests:</Text>
             <Text style={styles.requestText}>
-              I prefer green grapes over red grapes, so it would be appreciated if you got those. Thank you!
+            {matchedUser?.preferences?.specificRequests || 
+               `I'm looking forward to sharing ${matchData.itemName} with you. Let's coordinate!`}
             </Text>
           </View>
         </View>
+
+        {/* Accept Match Button */}
+        {matchData.status === "pending" && (
+          <TouchableOpacity
+            style={[styles.acceptButton, loading && styles.buttonDisabled]}
+            onPress={handleAcceptMatch}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? "Accepting..." : "Accept Match"}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Footer */}
         <View style={styles.footer}>

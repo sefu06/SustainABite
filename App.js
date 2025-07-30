@@ -1,12 +1,14 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+// import { AuthProvider } from "./hooks/useAuth";
+
 import LoginScreen from "./screens/LoginScreen";
-import HomeScreen from "./screens/HomeScreen";
+// import HomeScreen from "./screens/HomeScreen";
 import DropDownScreen from "./screens/DropDownScreen";
-import CartScreen from "./screens/CartScreen";
+// import CartScreen from "./screens/CartScreen";
 import ChooseItemsScreen from "./screens/ChooseItemsScreen";
-import WaitingForMatchesScreen from "./screens/WaitingForMatchesScreen"; 
+// import WaitingForMatchesScreen from "./screens/WaitingForMatchesScreen"; 
 import ShoppingCartConfirmation from "./screens/ShoppingCartConfirmation";
 import MatchScreen from "./screens/MatchScreen";
 import MatchDetailScreen from "./screens/MatchDetailScreen";
@@ -15,6 +17,7 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
+    <AuthProvider>
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen
@@ -64,5 +67,6 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
+    </AuthProvider>
   );
 }
