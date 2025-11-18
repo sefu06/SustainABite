@@ -1,57 +1,41 @@
-import React, { useState } from "react";
+import { View, Text, ScrollView, Image, StyleSheet} from "react-native";
+import React from "react";
+
+export default function ChooseItemsScreen() {
+    return (
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+
+            <Image source={require("../assets/apple.png")} style={styles.logo}></Image>
+
+            <Text style={styles.headerTitle}> What are you craving today? </Text>
+
+
+        </ScrollView>
+
+        
+    );
+}
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#faf1df",
+    scrollContainer: {
+        flexGrow: 1,
+        alignItems: "center",
         justifyContent: "center",
-        alignItems: "center",
-        paddingHorizontal: 20,
+        backgroundColor: "#faf1df"
     },
+
     logo: {
-        width: 400,
-        height: 200,
-        resizeMode: "contain",
-    },
-    input: {
-        width: "80%",
-        height: 50,
-        backgroundColor: "#fff",
-        borderRadius: 10,
-        paddingHorizontal: 16,
-        marginBottom: 16,
-        borderWidth: 1,
-        borderColor: "#ccc",
-    },
-    button: {
-        width: "80%",
-        backgroundColor: "#ff5a5f",
-        padding: 16,
-        borderRadius: 10,
-        alignItems: "center",
-        marginTop: 8,
-    },
-    buttonDisabled: {
-        opacity: 0.6,
-    },
-    buttonText: {
-        color: "#fff",
-        fontSize: 18,
-        fontWeight: "bold",
-    },
-    title: {
-        textAlign: "center",
-        fontSize: 15,
-        marginTop: 10,
-        paddingHorizontal: 10,
-    },
-    signUpContainer: {
-        marginTop: 10,
-        marginBottom: 24,
-    },
-    signUp: {
-        textAlign: "center",
-        fontSize: 15,
-        textDecorationLine: "underline",
-        marginBottom: 24,
-    },
+        width: 100,
+        height: 100,
+        margin: 10,
+        marginBottom: 30,
+        marginTop: -50,
+    } ,
+
+    headerTitle: {
+        fontStyle: "normal",
+        fontWeight: "400", 
+        lineHeight: "normal"
+
+    }
 });
