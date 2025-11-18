@@ -14,7 +14,7 @@ export default function App() {
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="ChooseItemsScreen" component={ChooseItemsScreen} />
-                <Stack.Screen name="DropDown" component={DropDownScreen} />
+                <Stack.Screen name="DropDownScreen" component={DropDownScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );
