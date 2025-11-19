@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity} from "react-native";
+import { View, Text, ScrollView, Image, StyleSheet, TouchableOpacity } from "react-native";
 import React from "react";
 import Carousel from "./components/Carousel.js";
 import BottomNavBar from "./components/BottomNavBar.js";
@@ -14,19 +14,19 @@ export default function ChooseItemsScreen() {
 
             <Text style={styles.headerTitle}> What are you craving today? </Text>
 
-            <Text style = {styles.text}> These were popular today...</Text>
+            <Text style={styles.text}> These were popular today...</Text>
 
             <Carousel />
 
             <TouchableOpacity
                 style={styles.button}
                 onPress={() => navigation.navigate("DropDownScreen")}>
-                
+
                 <Text style={styles.buttonText}>Browse Requests</Text>
 
             </TouchableOpacity>
 
-            
+
             <Text style={styles.text2}> Don't see the item you want? </Text>
 
             <TouchableOpacity
@@ -39,12 +39,12 @@ export default function ChooseItemsScreen() {
 
             <BottomNavBar />
 
-            
+
 
 
         </ScrollView>
 
-        
+
     );
 }
 
@@ -74,15 +74,15 @@ const styles = StyleSheet.create({
         color: "#555",
         marginTop: 100,
         marginBottom: 20,
-        textAlign: "center"   
+        textAlign: "center"
 
-    }, 
+    },
     button: {
         backgroundColor: "#FF9A9A",
         paddingVertical: 12,
         paddingHorizontal: 25,
         borderRadius: 10,
-        margin: 50, 
+        margin: 50,
         alignSelf: "center",
     },
     buttonText: {
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     },
 
     text2: {
-        marginTop: 40, 
+        marginTop: 40,
         marginBottom: -10
 
     }
