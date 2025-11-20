@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import LoginScreen from "./screens/LoginScreen";
 import ChooseItemsScreen from "./screens/ChooseItemsScreen";
-import DropDownScreen from "./screens/DropDownScreen";
+import BrowseRequestsScreen from "./screens/BrowseRequestsScreen";
 import MakeRequestScreen from "./screens/MakeRequestScreen"
 
 const Stack = createNativeStackNavigator();
@@ -15,9 +15,10 @@ export default function App() {
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Login" component={LoginScreen} />
                 <Stack.Screen name="ChooseItemsScreen" component={ChooseItemsScreen} />
-                <Stack.Screen name="DropDownScreen" component={DropDownScreen} />
+                <Stack.Screen name="BrowseRequestsScreen" component={BrowseRequestsScreen} />
                 <Stack.Screen name= "MakeRequestScreen" component={MakeRequestScreen} />
             </Stack.Navigator>
         </NavigationContainer>
+
     );
 }

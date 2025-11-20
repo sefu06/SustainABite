@@ -20,7 +20,7 @@ export default function ChooseItemsScreen() {
 
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => navigation.navigate("DropDownScreen")}>
+                onPress={() => navigation.navigate("BrowseRequestsScreen")}>
 
                 <Text style={styles.buttonText}>Browse Requests</Text>
 
