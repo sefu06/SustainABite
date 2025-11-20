@@ -7,7 +7,7 @@ export default function BottomNavBar() {
 
     return (
         <View style={styles.navBar}>
-            <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+            <TouchableOpacity onPress={() => navigation.navigate("ChooseItemsScreen")}>
                 <Image
                     source={require("../../assets/home.png")}
                     style={styles.icon}
