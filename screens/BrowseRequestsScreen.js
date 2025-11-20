@@ -1,34 +1,44 @@
 import { View, ScrollView, Image, StyleSheet, Text, TouchableOpacity } from "react-native";
-import { useState } from "react";
 import BottomNavBar from "./components/BottomNavBar.js";
 
 export default function BrowseRequestsScreen() {
+    // Example data; later this can come from a database
+    const requests = [
+        {
+            username: "Selina",
+            request: "apples, chicken",
+            image: require("../assets/selina.png"),
+        },
+        {
+            username: "Gianna",
+            request: "bananas, eggs",
+            image: require("../assets/gianna.png"),
+        },
+        
+    ];
+
     return (
         <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContainer}> 
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+                <Image source={require("../assets/apple.png")} style={styles.logo} />
+                <Text style={styles.headerTitle}>Browse Requests!</Text>
 
-                                <Image source={require("../assets/apple.png")} style={styles.logo} />
-                                <Text style={styles.headerTitle}>Browse Requests!</Text>
-
-                
-                <TouchableOpacity style={styles.requestBox} >
-                    <Text style={styles.Username}>
-                        Selina
-                    </Text>
-                    <Text style={styles.Request}>
-                        apples, chicken
-                    </Text>
-                    <Image source={require("../assets/selina.png")}></Image>
-                </TouchableOpacity>
+                {/* Map over requests array */}
+                {requests.map((req, index) => (
+                    <TouchableOpacity key={index} style={styles.requestBox}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.Username}>{req.username}</Text>
+                            <Text style={styles.Request}>{req.request}</Text>
+                        </View>
+                        <Image source={req.image} style={styles.userImage} />
+                    </TouchableOpacity>
+                ))}
 
             </ScrollView>
 
-            <BottomNavBar/>
-
+            <BottomNavBar />
         </View>
-       
-        
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -38,9 +48,8 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         paddingVertical: 30,
-        paddingBottom: 100,
+        paddingBottom: 100, // space for navbar
         alignItems: "center",
-        
     },
     logo: {
         width: 80,
@@ -54,18 +63,20 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         textAlign: "center",
         color: "#333",
-    }, 
+    },
     requestBox: {
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#fff",
-        padding: 10,
+        padding: 15,
         borderRadius: 10,
         marginBottom: 10,
+        width: "90%", // make box take most of the screen width
     },
     Username: {
         fontWeight: "600",
-        marginRight: 10,
+        fontSize: 16,
+        marginBottom: 3,
     },
     Request: {
         color: "#555",
