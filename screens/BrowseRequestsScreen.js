@@ -1,8 +1,10 @@
 import { View, ScrollView, Image, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { useState } from "react";
 import BottomNavBar from "./components/BottomNavBar.js";
 
 export default function BrowseRequestsScreen() {
-    // Example data; later this can come from a database
+    const [selectedUser, setSelectedUser] = useState(null);   // Track selected user
+
     const requests = [
         {
             username: "Selina",
@@ -14,8 +16,16 @@ export default function BrowseRequestsScreen() {
             request: "bananas, eggs",
             image: require("../assets/gianna.png"),
         },
-        
     ];
+
+    // Handle selection toggle
+    const toggleSelect = (username) => {
+        if (selectedUser === username) {
+            setSelectedUser(null);  // unselect
+        } else {
+            setSelectedUser(username); // select
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -23,16 +33,34 @@ export default function BrowseRequestsScreen() {
                 <Image source={require("../assets/apple.png")} style={styles.logo} />
                 <Text style={styles.headerTitle}>Browse Requests!</Text>
 
-                {/* Map over requests array */}
-                {requests.map((req, index) => (
-                    <TouchableOpacity key={index} style={styles.requestBox}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.Username}>{req.username}</Text>
-                            <Text style={styles.Request}>{req.request}</Text>
-                        </View>
-                        <Image source={req.image} style={styles.userImage} />
-                    </TouchableOpacity>
-                ))}
+                {requests.map((req, index) => {
+                    const isSelected = selectedUser === req.username;
+
+                    return (
+                        <TouchableOpacity
+                            //
+                            style={[
+                                styles.requestBox,
+                                isSelected && styles.selectedBox,   // highlight if selected
+                            ]}
+                            onPress={() => toggleSelect(req.username)}
+                        >
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.Username}>{req.username}</Text>
+                                <Text style={styles.Request}>{req.request}</Text>
+                            </View>
+                            <Image source={req.image} style={styles.userImage} />
+                        </TouchableOpacity>
+                    );
+                })}
+
+                <TouchableOpacity
+                    style={styles.button}
+                >
+                    <Text style={styles.buttonText}>
+                        Confirm Selection
+                    </Text>
+                </TouchableOpacity>
 
             </ScrollView>
 
@@ -48,7 +76,7 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         paddingVertical: 30,
-        paddingBottom: 100, // space for navbar
+        paddingBottom: 100,
         alignItems: "center",
     },
     logo: {
@@ -71,8 +99,13 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         marginBottom: 10,
-        width: "90%", // make box take most of the screen width
+        width: "90%",
     },
+
+    selectedBox: {
+        backgroundColor: "#FFC8C8",
+    },
+
     Username: {
         fontWeight: "600",
         fontSize: 16,
@@ -86,5 +119,20 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 25,
         marginLeft: 10,
+    },
+
+    button: {
+        backgroundColor: "#FF9A9A",
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 10,
+        margin: 50,
+        alignSelf: "center",
+    },
+
+    buttonText: {
+        color: "#000",
+        fontSize: 16,
+        fontWeight: "600",
     },
 });
