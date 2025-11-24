@@ -2,9 +2,11 @@ import {View,  ScrollView, Image, StyleSheet, Text, TouchableOpacity } from "rea
 import { useState } from "react";
 import BottomNavBar from "./components/BottomNavBar.js";
 import SelectableItemList from "./components/SelectableItemList.js";
+import { useNavigation } from "@react-navigation/native";
 
 export default function ChooseItemsScreen() {
     const [selectedItems, setSelectedItems] = useState([]);
+    const navigation = useNavigation();
 
     const produceItems = [
         { name: "Avocados", image: require("../assets/avocado.jpg") },
@@ -51,14 +53,15 @@ export default function ChooseItemsScreen() {
                     setSelectedItems={setSelectedItems}
                 />
 
-                <TouchableOpacity style={styles.buttonSubmit}>
-                    <Text style={styles.buttonText}>
-                        Submit Request!
-                    </Text>
+                <TouchableOpacity
+                    style={styles.buttonSubmit}
+                    onPress={() => navigation.navigate("RequestSubmittedSuccessfullyScreen")}
+                >
+                    <Text style={styles.buttonText}>Submit Request!</Text>
                 </TouchableOpacity>
             </ScrollView>
 
-            {/* Fixed Bottom Navbar */}
+          
             <BottomNavBar />
         </View>
     );
