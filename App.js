@@ -7,6 +7,7 @@ import ChooseItemsScreen from "./screens/ChooseItemsScreen";
 import BrowseRequestsScreen from "./screens/BrowseRequestsScreen";
 import MakeRequestScreen from "./screens/MakeRequestScreen"
 import RequestSubmittedSuccessfullyScreen from "./screens/RequestSubmittedSuccessfullyScreen";
+import SignUpScreen from "./screens/SignUpScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ export default function App() {
                 <Stack.Screen name="BrowseRequestsScreen" component={BrowseRequestsScreen} />
                 <Stack.Screen name="MakeRequestScreen" component={MakeRequestScreen} />
                 <Stack.Screen name="RequestSubmittedSuccessfullyScreen" component={RequestSubmittedSuccessfullyScreen} />
+                <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
             </Stack.Navigator>
         </NavigationContainer>
 

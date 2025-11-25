@@ -8,20 +8,13 @@ import {
     Image,
     Alert,
 } from "react-native";
+import { login, signup } from "../services/Auth";
 
 export default function LoginScreen({ navigation }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [username, setUsername] = useState(""); // For sign-up
     const [loading, setLoading] = useState(false);
-
-    // Fake login function (no Firebase)
-    const fakeLogin = async (email, password) => {
-        return new Promise((resolve) => setTimeout(resolve, 800));
-    };
-
-    const fakeRegister = async (email, password) => {
-        return new Promise((resolve) => setTimeout(resolve, 800));
-    };
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -31,7 +24,7 @@ export default function LoginScreen({ navigation }) {
 
         setLoading(true);
         try {
-            await fakeLogin(email, password);
+            await login(email, password);
             navigation.navigate("ChooseItemsScreen");
         } catch (error) {
             Alert.alert("Login Error", error.message);
@@ -41,17 +34,17 @@ export default function LoginScreen({ navigation }) {
     };
 
     const handleSignUp = async () => {
-        if (!email || !password) {
+        if (!email || !password || !username) {
             Alert.alert("Error", "Please fill in all fields");
             return;
         }
 
         setLoading(true);
         try {
-            await fakeRegister(email, password);
+            await signup(email, password, username);
             navigation.navigate("ChooseItemsScreen");
         } catch (error) {
-            Alert.alert("Signup Error", error.message);
+            Alert.alert("Sign Up Error", error.message);
         } finally {
             setLoading(false);
         }
@@ -94,10 +87,9 @@ export default function LoginScreen({ navigation }) {
 
             <TouchableOpacity
                 style={styles.signUpContainer}
-                onPress={handleSignUp}
-                disabled={loading}
+                onPress={() => navigation.navigate("SignUpScreen")}
             >
-                <Text style={styles.signUp}>Sign up</Text>
+                <Text style={styles.signUp}>Sign Up</Text>
             </TouchableOpacity>
         </View>
     );
@@ -112,9 +104,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     logo: {
-        width: 400,
-        height: 200,
+        width: 200,
+        height: 100,
         resizeMode: "contain",
+        marginBottom: 20,
     },
     input: {
         width: "80%",
@@ -134,6 +127,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 8,
     },
+    signUpButton: {
+        backgroundColor: "#00a86b", // Different color for sign-up
+        marginTop: 12,
+    },
     buttonDisabled: {
         opacity: 0.6,
     },
@@ -147,15 +144,5 @@ const styles = StyleSheet.create({
         fontSize: 15,
         marginTop: 10,
         paddingHorizontal: 10,
-    },
-    signUpContainer: {
-        marginTop: 10,
-        marginBottom: 24,
-    },
-    signUp: {
-        textAlign: "center",
-        fontSize: 15,
-        textDecorationLine: "underline",
-        marginBottom: 24,
     },
 });
