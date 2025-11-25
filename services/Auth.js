@@ -14,7 +14,7 @@ export async function signup(email, password, username) {
         email,
         username,
         createdAt: new Date()
-    });
+    },{ merge: true });
 
     return user;
 }

@@ -21,7 +21,7 @@ export default function BottomNavBar() {
                 />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+            <TouchableOpacity onPress={() => navigation.navigate("ProfileScreen")}>
                 <Image
                     source={require("../../assets/gianna.png")}
                     style={styles.icon}
