@@ -3,6 +3,8 @@ import { useState } from "react";
 import BottomNavBar from "./components/BottomNavBar.js";
 import SelectableItemList from "./components/SelectableItemList.js";
 import { useNavigation } from "@react-navigation/native";
+import { auth, db } from "../firebase";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 
 export default function ChooseItemsScreen() {
     const [selectedItems, setSelectedItems] = useState([]);
@@ -25,6 +27,28 @@ export default function ChooseItemsScreen() {
         { name: "Cheese", image: require("../assets/cheese.jpg") },
         { name: "Yogurt", image: require("../assets/yogurt.jpg") },
     ];
+
+    const handleSubmitRequest = async () => {
+        try {
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("You must be logged in.");
+                return;
+            }
+
+            await addDoc(collection(db, "requests"), {
+                userId: user.uid,
+                username: user.email,       // change later if you store real username
+                items: selectedItems,
+                createdAt: serverTimestamp()
+            });
+
+            navigation.navigate("RequestSubmittedSuccessfullyScreen");
+        } catch (error) {
+            console.log("Error submitting request:", error);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -55,7 +79,7 @@ export default function ChooseItemsScreen() {
 
                 <TouchableOpacity
                     style={styles.buttonSubmit}
-                    onPress={() => navigation.navigate("RequestSubmittedSuccessfullyScreen")}
+                    onPress={handleSubmitRequest}
                 >
                     <Text style={styles.buttonText}>Submit Request!</Text>
                 </TouchableOpacity>

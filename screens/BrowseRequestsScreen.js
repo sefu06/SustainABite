@@ -1,6 +1,8 @@
 import { View, ScrollView, Image, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useState } from "react";
 import BottomNavBar from "./components/BottomNavBar.js";
+import { db } from "../firebase";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 
 export default function BrowseRequestsScreen() {
     const [selectedUser, setSelectedUser] = useState(null);   // Track selected user
