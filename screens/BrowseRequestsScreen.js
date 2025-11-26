@@ -1,32 +1,43 @@
-import { View, ScrollView, Image, StyleSheet, Text, TouchableOpacity } from "react-native";
-import { useState } from "react";
-import BottomNavBar from "./components/BottomNavBar.js";
+import React, { useState, useEffect } from "react";
+import {
+    View,
+    ScrollView,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+} from "react-native";
+
+import BottomNavBar from "./components/BottomNavBar";
+
 import { db } from "../firebase";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+    collection,
+    onSnapshot,
+    orderBy,
+    query
+} from "firebase/firestore";
 
 export default function BrowseRequestsScreen() {
-    const [selectedUser, setSelectedUser] = useState(null);   // Track selected user
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [requests, setRequests] = useState([]);
 
-    const requests = [
-        {
-            username: "Selina",
-            request: "apples, chicken",
-            image: require("../assets/selina.png"),
-        },
-        {
-            username: "Gianna",
-            request: "bananas, eggs",
-            image: require("../assets/gianna.png"),
-        },
-    ];
+    useEffect(() => {
+        const q = collection(db, "requests");
 
-    // Handle selection toggle
-    const toggleSelect = (username) => {
-        if (selectedUser === username) {
-            setSelectedUser(null);  // unselect
-        } else {
-            setSelectedUser(username); // select
-        }
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const firebaseRequests = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+            setRequests(firebaseRequests);
+        });
+
+        return unsubscribe;
+    }, []);
+
+    const toggleSelect = (userId) => {
+        setSelectedUser((prev) => (prev === userId ? null : userId));
     };
 
     return (
@@ -35,35 +46,38 @@ export default function BrowseRequestsScreen() {
                 <Image source={require("../assets/apple.png")} style={styles.logo} />
                 <Text style={styles.headerTitle}>Browse Requests!</Text>
 
-                {requests.map((req, index) => {
-                    const isSelected = selectedUser === req.username;
+                {requests.map((req) => {
+                    const isSelected = selectedUser === req.userId;
 
                     return (
                         <TouchableOpacity
-                            //
+                            key={req.id}
                             style={[
                                 styles.requestBox,
-                                isSelected && styles.selectedBox,   // highlight if selected
+                                isSelected && styles.selectedBox,
                             ]}
-                            onPress={() => toggleSelect(req.username)}
+                            onPress={() => toggleSelect(req.userId)}
                         >
                             <View style={{ flex: 1 }}>
                                 <Text style={styles.Username}>{req.username}</Text>
-                                <Text style={styles.Request}>{req.request}</Text>
+                                <Text style={styles.Request}>
+                                    {Array.isArray(req.items)
+                                        ? req.items.join(", ")
+                                        : "No items"}
+                                </Text>
                             </View>
-                            <Image source={req.image} style={styles.userImage} />
+
+                            <Image
+                                source={require("../assets/profile.jpg")}
+                                style={styles.userImage}
+                            />
                         </TouchableOpacity>
                     );
                 })}
 
-                <TouchableOpacity
-                    style={styles.button}
-                >
-                    <Text style={styles.buttonText}>
-                        Confirm Selection
-                    </Text>
+                <TouchableOpacity style={styles.button}>
+                    <Text style={styles.buttonText}>Confirm Selection</Text>
                 </TouchableOpacity>
-
             </ScrollView>
 
             <BottomNavBar />
@@ -103,11 +117,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         width: "90%",
     },
-
     selectedBox: {
         backgroundColor: "#FFC8C8",
     },
-
     Username: {
         fontWeight: "600",
         fontSize: 16,
@@ -122,7 +134,6 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         marginLeft: 10,
     },
-
     button: {
         backgroundColor: "#FF9A9A",
         paddingVertical: 12,
@@ -131,7 +142,6 @@ const styles = StyleSheet.create({
         margin: 50,
         alignSelf: "center",
     },
-
     buttonText: {
         color: "#000",
         fontSize: 16,
