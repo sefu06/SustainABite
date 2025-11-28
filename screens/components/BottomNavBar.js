@@ -14,7 +14,7 @@ export default function BottomNavBar() {
                 />
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate("Requests")}>
+            <TouchableOpacity onPress={() => navigation.navigate("ChatListScreen")}>
                 <Image
                     source={require("../../assets/chat.png")}
                     style={styles.icon}

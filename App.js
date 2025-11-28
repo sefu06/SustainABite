@@ -10,6 +10,7 @@ import RequestSubmittedSuccessfullyScreen from "./screens/RequestSubmittedSucces
 import SignUpScreen from "./screens/SignUpScreen";
 import ProfileScreen from "./screens/ProfileScreen"
 import ChatScreen from "./screens/ChatScreen";
+import ChatListScreen from "./screens/ChatListScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -25,6 +26,7 @@ export default function App() {
                 <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
                 <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
                 <Stack.Screen name="ChatScreen" component={ChatScreen} />
+                <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
             </Stack.Navigator>
         </NavigationContainer>
 
