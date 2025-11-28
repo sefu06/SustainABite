@@ -8,20 +8,66 @@ import {
     TouchableOpacity,
 } from "react-native";
 
+import { useNavigation } from "@react-navigation/native";
+import { auth, db } from "../firebase";
+
 import BottomNavBar from "./components/BottomNavBar";
 
-import { db } from "../firebase";
 import {
     collection,
     onSnapshot,
-    orderBy,
-    query
+    query,
+    where,
+    getDocs,
+    addDoc
 } from "firebase/firestore";
 
+// Create or fetch an existing chat
+async function createOrGetChat(otherUserId) {
+    const currentUserId = auth.currentUser.uid;
+
+    const chatsRef = collection(db, "chats");
+
+    // Find chats where current user is a participant
+    const q = query(
+        chatsRef,
+        where("participants", "array-contains", currentUserId)
+    );
+
+    const snapshot = await getDocs(q);
+
+    let existingChat = null;
+
+    snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.participants.includes(otherUserId)) {
+            existingChat = {
+                id: doc.id,
+                ...data
+            };
+        }
+    });
+
+    // If chat already exists, return it
+    if (existingChat) {
+        return existingChat.id;
+    }
+
+    // Otherwise create a new chat document
+    const newChatRef = await addDoc(chatsRef, {
+        participants: [currentUserId, otherUserId],
+        createdAt: Date.now(),
+    });
+
+    return newChatRef.id;
+}
+
 export default function BrowseRequestsScreen() {
+    const navigation = useNavigation();
     const [selectedUser, setSelectedUser] = useState(null);
     const [requests, setRequests] = useState([]);
 
+    // Fetch requests
     useEffect(() => {
         const q = collection(db, "requests");
 
@@ -30,6 +76,7 @@ export default function BrowseRequestsScreen() {
                 id: doc.id,
                 ...doc.data(),
             }));
+
             setRequests(firebaseRequests);
         });
 
@@ -43,6 +90,7 @@ export default function BrowseRequestsScreen() {
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
+
                 <Image source={require("../assets/apple.png")} style={styles.logo} />
                 <Text style={styles.headerTitle}>Browse Requests!</Text>
 
@@ -75,15 +123,35 @@ export default function BrowseRequestsScreen() {
                     );
                 })}
 
-                <TouchableOpacity style={styles.button}>
+                {/* Confirm Button */}
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={async () => {
+                        if (!selectedUser) {
+                            alert("Please select a user first!");
+                            return;
+                        }
+
+                        const chatId = await createOrGetChat(selectedUser);
+
+                        navigation.navigate("ChatScreen", {
+                            chatId,
+                            currentUserId: auth.currentUser.uid,
+                            otherUserId: selectedUser,
+                        });
+                    }}
+                >
                     <Text style={styles.buttonText}>Confirm Selection</Text>
                 </TouchableOpacity>
+
             </ScrollView>
 
             <BottomNavBar />
         </View>
     );
 }
+
+/* ------------------ Styles ------------------ */
 
 const styles = StyleSheet.create({
     container: {
