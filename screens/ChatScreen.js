@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
 import { db } from "../firebase";
 import { collection, addDoc, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
+import BottomNavBar from "./components/BottomNavBar";
 
 export default function ChatScreen({ route }) {
     const { currentUserId, otherUserId } = route.params;
@@ -68,6 +69,7 @@ export default function ChatScreen({ route }) {
                     <Text style={styles.sendText}>Send</Text>
                 </TouchableOpacity>
             </View>
+            <BottomNavBar/>
         </View>
     );
 }

@@ -42,7 +42,8 @@ const styles = StyleSheet.create({
         borderColor: "#ddd",
         position: "absolute",
         bottom: 0,
-        width: "100%",
+        left: 0,
+        right: 0,
         paddingBottom: 10,
     },
     icon: {
