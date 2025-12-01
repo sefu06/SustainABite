@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
 import { db } from "../firebase";
-import { collection, addDoc, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, onSnapshot, orderBy, query, serverTimestamp, getDoc, doc } from "firebase/firestore";
 import BottomNavBar from "./components/BottomNavBar";
 
 export default function ChatScreen({ route }) {
@@ -10,6 +10,7 @@ export default function ChatScreen({ route }) {
 
     const [messages, setMessages] = useState([]);
     const [text, setText] = useState("");
+    const [otherUsername, setOtherUsername] = useState("...");
 
     useEffect(() => {
         const messagesRef = collection(db, "chats", chatId, "messages");
@@ -21,10 +22,29 @@ export default function ChatScreen({ route }) {
                 ...doc.data(),
             }));
             setMessages(msgs);
+        
         });
 
         return unsubscribe;
     }, []);
+
+
+    useEffect(() => {
+        async function fetchUsername() {
+            const userRef = doc(db, "users", otherUserId);
+            const snap = await getDoc(userRef);
+
+            if (snap.exists()) {
+                setOtherUsername(snap.data().username);
+            } else {
+                setOtherUsername("Unknown");
+            }
+        }
+
+        fetchUsername();
+    }, []);
+
+    
 
     const sendMessage = async () => {
         if (text.trim().length === 0) return;
@@ -40,6 +60,7 @@ export default function ChatScreen({ route }) {
 
     return (
         <View style={styles.container}>
+            <Text style={styles.banner}>Chat with: {otherUsername}</Text>
             <FlatList
                 data={messages}
                 keyExtractor={(item) => item.id}
@@ -75,7 +96,7 @@ export default function ChatScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#fff", padding: 10 },
+    container: { flex: 1, backgroundColor: "#fff", padding: 10, paddingBottom: 80 },
     message: {
         padding: 10,
         marginVertical: 5,
@@ -110,4 +131,14 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     sendText: { fontWeight: "bold" },
+    banner: {
+        fontSize: 18,
+        fontWeight: "700",
+        padding: 10,
+        backgroundColor: "#FFE5E5",
+        textAlign: "center",
+        marginBottom: 10,
+        borderRadius: 10,
+    },
+    
 });
