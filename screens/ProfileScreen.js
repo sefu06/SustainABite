@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
+    collection,
+    query,
+    where,
+    onSnapshot,
+    deleteDoc
+} from "firebase/firestore";
+import {
     View,
     ScrollView,
     Image,
@@ -15,6 +22,7 @@ import { launchImageLibrary } from "react-native-image-picker";
 import BottomNavBar from "./components/BottomNavBar";
 
 export default function ProfileScreen() {
+    const [myRequests, setMyRequests] = useState([]);
     const [userData, setUserData] = useState({ username: "", email: "" });
     const [profileImage, setProfileImage] = useState(null);
     const user = auth.currentUser;
@@ -47,6 +55,27 @@ export default function ProfileScreen() {
         };
 
         fetchUserData();
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) return;
+
+        const q = query(
+            collection(db, "requests"),
+            where("userId", "==", user.uid)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const requests = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+            console.log("My requests:", requests); // debug
+            setMyRequests(requests);
+        });
+
+        return unsubscribe;
     }, [user]);
 
     // Handle profile picture change
@@ -91,6 +120,25 @@ export default function ProfileScreen() {
 
             <Text style={styles.headerTitle}>{userData.username}</Text>
             <Text style={styles.email}>{userData.email}</Text>
+
+            <Text>My Requests:</Text>
+
+            {myRequests.length === 0 ? (
+                <Text style={{ color: "#777", marginTop: 10 }}>
+                    You have no requests yet.
+                </Text>
+            ) : (
+                myRequests.map((req) => (
+                    <View key={req.id} style={styles.requestBox}>
+                        <Text style={styles.requestItems}>
+                            {Array.isArray(req.items)
+                                ? req.items.join(", ")
+                                : "No items"}
+                        </Text>
+                    </View>
+                ))
+            )}
+
 
             <BottomNavBar />
         </ScrollView>
