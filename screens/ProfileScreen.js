@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Platform} from "react-native";
 import {
     collection,
     query,
@@ -17,7 +18,7 @@ import {
 } from "react-native";
 import { auth, db } from "../firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import storage from "@react-native-firebase/storage";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import { launchImageLibrary } from "react-native-image-picker";
 import BottomNavBar from "./components/BottomNavBar";
 
@@ -71,7 +72,7 @@ export default function ProfileScreen() {
                 ...doc.data(),
             }));
 
-            console.log("My requests:", requests); // debug
+            console.log("My requests:", requests);
             setMyRequests(requests);
         });
 
@@ -80,29 +81,82 @@ export default function ProfileScreen() {
 
     // Handle profile picture change
     const handlePickImage = async () => {
-        launchImageLibrary({ mediaType: "photo", quality: 0.7 }, async (response) => {
-            if (response.didCancel) return;
-            if (response.errorCode) {
-                Alert.alert("Error picking image", response.errorMessage);
-                return;
+        try {
+            let uri;
+            let blob;
+
+            // Platform-specific image picking
+            if (Platform.OS === 'web') {
+                // Create a file input for web
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+
+                const filePromise = new Promise((resolve, reject) => {
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            resolve(file);
+                        } else {
+                            reject(new Error('No file selected'));
+                        }
+                    };
+                    input.oncancel = () => reject(new Error('Cancelled'));
+                });
+
+                input.click();
+                const file = await filePromise;
+                blob = file;
+
+                // Create preview URL for web
+                uri = URL.createObjectURL(file);
+                setProfileImage(uri); // Temporary preview
+
+            } else {
+                // Use react-native-image-picker for native (iOS/Android)
+                const result = await launchImageLibrary({
+                    mediaType: "photo",
+                    quality: 0.7,
+                });
+
+                if (result.didCancel) return;
+                if (result.errorCode) {
+                    Alert.alert("Error picking image", result.errorMessage);
+                    return;
+                }
+
+                uri = result.assets[0].uri;
+
+                // Convert to blob for native
+                const response = await fetch(uri);
+                blob = await response.blob();
             }
 
-            const uri = response.assets[0].uri;
-            setProfileImage(uri);
+            // Upload to Firebase Storage (works for both platforms)
+            const storage = getStorage();
+            const storageRef = ref(storage, `profileImages/${user.uid}.jpg`);
 
-            try {
-                const storageRef = storage().ref(`profileImages/${user.uid}.jpg`);
-                await storageRef.putFile(uri);
+            console.log("Starting upload...");
+            await uploadBytes(storageRef, blob);
+            console.log("Upload complete!");
 
-                const downloadURL = await storageRef.getDownloadURL();
-                await updateDoc(doc(db, "users", user.uid), { profileImage: downloadURL });
+            const downloadURL = await getDownloadURL(storageRef);
+            console.log("Download URL:", downloadURL);
 
-                setProfileImage(downloadURL);
-                Alert.alert("Profile picture updated!");
-            } catch (error) {
-                Alert.alert("Error updating profile picture", error.message);
-            }
-        });
+            // Save to Firestore
+            await setDoc(
+                doc(db, "users", user.uid),
+                { profileImage: downloadURL },
+                { merge: true }
+            );
+
+            setProfileImage(downloadURL);
+            Alert.alert("Profile picture updated!");
+
+        } catch (error) {
+            console.log("Upload error:", error);
+            Alert.alert("Error uploading profile picture", error.message);
+        }
     };
 
     return (
@@ -118,10 +172,17 @@ export default function ProfileScreen() {
                 />
             </TouchableOpacity>
 
+            <TouchableOpacity onPress={handlePickImage}>
+
+                <Text style={styles.changePic}> Change profile picture</Text>
+
+            </TouchableOpacity>
+
+
             <Text style={styles.headerTitle}>{userData.username}</Text>
             <Text style={styles.email}>{userData.email}</Text>
 
-            <Text>My Requests:</Text>
+            <Text style={styles.requestsTitle}>My Requests:</Text>
 
             {myRequests.length === 0 ? (
                 <Text style={{ color: "#777", marginTop: 10 }}>
@@ -170,4 +231,38 @@ const styles = StyleSheet.create({
         color: "#555",
         marginBottom: 20,
     },
+
+    requestsTitle: {
+        fontSize: 18,
+        fontWeight: "600",
+        marginTop: 20,
+        marginBottom: 10,
+        color: "#333",
+    },
+
+    requestBox: {
+        width: "90%",
+        backgroundColor: "#fff",
+        padding: 15,
+        borderRadius: 12,
+        marginBottom: 12,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3, // Android shadow
+    },
+
+    requestItems: {
+        fontSize: 15,
+        color: "#444",
+        lineHeight: 20,
+    },
+
+    emptyText: {
+        color: "#777",
+        marginTop: 10,
+        fontStyle: "italic",
+    },
+    
 });

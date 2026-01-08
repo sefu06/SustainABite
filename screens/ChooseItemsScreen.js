@@ -7,6 +7,18 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function ChooseItemsScreen() {
     const navigation = useNavigation();
+    console.log("Navigation object:", navigation);
+
+    const handleBrowse = () => {
+        console.log("Browse button pressed!");
+        navigation.navigate("BrowseRequestsScreen");
+    };
+
+    const handleRequest = () => {
+        console.log("Request button pressed!");
+        navigation.navigate("MakeRequestScreen");
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
 
@@ -16,7 +28,9 @@ export default function ChooseItemsScreen() {
 
             <Text style={styles.text}> These were popular today...</Text>
 
-            <Carousel />
+            
+                <Carousel />
+            
 
             <TouchableOpacity
                 style={styles.button}
@@ -35,7 +49,7 @@ export default function ChooseItemsScreen() {
 
                 <Text style={styles.buttonText}>Submit A request</Text>
 
-            </TouchableOpacity>
+            </TouchableOpacity> 
 
             <BottomNavBar />
 
@@ -54,6 +68,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         backgroundColor: "#faf1df",
         paddingVertical: 30,
+        
     },
     logo: {
         width: 80,
