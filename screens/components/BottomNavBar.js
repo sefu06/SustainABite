@@ -1,9 +1,11 @@
 import React from "react";
 import { View, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useProfileImage } from "./ProfileImageContext";
 
 export default function BottomNavBar() {
     const navigation = useNavigation();
+    const { profileImage } = useProfileImage();
 
     return (
         <View style={styles.navBar}>
@@ -23,8 +25,12 @@ export default function BottomNavBar() {
 
             <TouchableOpacity onPress={() => navigation.navigate("ProfileScreen")}>
                 <Image
-                    source={require("../../assets/gianna.png")}
-                    style={styles.icon}
+                    source={
+                        profileImage
+                            ? { uri: profileImage }
+                            : require("../../assets/profile.jpg")
+                    }
+                    style={styles.profilePicture}
                 />
             </TouchableOpacity>
         </View>
@@ -47,8 +53,16 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     icon: {
+        width: 36,
+        height: 36,
+        resizeMode: "contain"
+    },
+
+    profilePicture: {
         width: 30,
         height: 30,
-        resizeMode: "contain",
-    },
+        borderRadius: 15,
+        resizeMode: "cover",
+
+    }
 });

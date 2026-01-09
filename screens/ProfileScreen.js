@@ -22,11 +22,12 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import BottomNavBar from "./components/BottomNavBar";
+import { useProfileImage } from "./components/ProfileImageContext";
 
 export default function ProfileScreen() {
     const [myRequests, setMyRequests] = useState([]);
     const [userData, setUserData] = useState({ username: "", email: "" });
-    const [profileImage, setProfileImage] = useState(null);
+    const { profileImage, setProfileImage } = useProfileImage();
     const [selectedRequests, setSelectedRequests] = useState([]);
     const user = auth.currentUser;
 

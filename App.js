@@ -11,11 +11,13 @@ import SignUpScreen from "./screens/SignUpScreen";
 import ProfileScreen from "./screens/ProfileScreen"
 import ChatScreen from "./screens/ChatScreen";
 import ChatListScreen from "./screens/ChatListScreen";
+import { ProfileImageProvider } from "./screens/components/ProfileImageContext";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
     return (
+        <ProfileImageProvider>
         <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Login" component={LoginScreen} />
@@ -28,7 +30,8 @@ export default function App() {
                 <Stack.Screen name="ChatScreen" component={ChatScreen} />
                 <Stack.Screen name="ChatListScreen" component={ChatListScreen} />
             </Stack.Navigator>
-        </NavigationContainer>
+            </NavigationContainer>
+        </ProfileImageProvider>
 
     );
 }
