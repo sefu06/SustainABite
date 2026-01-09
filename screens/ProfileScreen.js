@@ -19,7 +19,7 @@ import {
 import { auth, db } from "../firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { launchImageLibrary } from "react-native-image-picker";
+import * as ImagePicker from "expo-image-picker";
 import BottomNavBar from "./components/BottomNavBar";
 
 export default function ProfileScreen() {
@@ -82,64 +82,84 @@ export default function ProfileScreen() {
     // Handle profile picture change
     const handlePickImage = async () => {
         try {
+            console.log("Starting image picker...");
             let uri;
             let blob;
 
-            // Platform-specific image picking
-            if (Platform.OS === 'web') {
-                // Create a file input for web
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
+            if (Platform.OS === "web") {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = "image/*";
 
-                const filePromise = new Promise((resolve, reject) => {
-                    input.onchange = (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            resolve(file);
+                const file = await new Promise((resolve, reject) => {
+                    input.onchange = () => {
+                        if (input.files[0]) {
+                            resolve(input.files[0]);
                         } else {
-                            reject(new Error('No file selected'));
+                            reject(new Error("No file selected"));
                         }
                     };
-                    input.oncancel = () => reject(new Error('Cancelled'));
+                    input.onerror = reject;
+                    input.click();
                 });
 
-                input.click();
-                const file = await filePromise;
-                blob = file;
-
-                // Create preview URL for web
                 uri = URL.createObjectURL(file);
-                setProfileImage(uri); // Temporary preview
-
+                blob = file;
+                setProfileImage(uri);
             } else {
-                // Use react-native-image-picker for native (iOS/Android)
-                const result = await launchImageLibrary({
-                    mediaType: "photo",
+                // Request permission
+                const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (!permission.granted) {
+                    Alert.alert("Permission required", "Please allow access to photos");
+                    return;
+                }
+
+                // Launch image picker
+                const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    aspect: [1, 1],
                     quality: 0.7,
                 });
 
-                if (result.didCancel) return;
-                if (result.errorCode) {
-                    Alert.alert("Error picking image", result.errorMessage);
+                if (result.canceled) {
+                    console.log("Image picker cancelled");
                     return;
                 }
 
                 uri = result.assets[0].uri;
+                console.log("Selected image URI:", uri);
 
-                // Convert to blob for native
+                // Convert to blob - handle both platforms
                 const response = await fetch(uri);
                 blob = await response.blob();
+                console.log("Blob created:", blob.type, blob.size);
+
+                // Temporary preview
+                setProfileImage(uri);
             }
 
-            // Upload to Firebase Storage (works for both platforms)
+            if (!user) {
+                throw new Error("User not authenticated");
+            }
+
+            // Upload to Firebase Storage
             const storage = getStorage();
-            const storageRef = ref(storage, `profileImages/${user.uid}.jpg`);
+            const fileName = `profileImages/${user.uid}_${Date.now()}.jpg`;
+            const storageRef = ref(storage, fileName);
 
-            console.log("Starting upload...");
-            await uploadBytes(storageRef, blob);
-            console.log("Upload complete!");
+            console.log("Uploading to:", fileName);
+            console.log("Blob size:", blob.size, "bytes");
 
+            // Upload with metadata
+            const metadata = {
+                contentType: blob.type || 'image/jpeg',
+            };
+
+            await uploadBytes(storageRef, blob, metadata);
+            console.log("Upload successful!");
+
+            // Get download URL
             const downloadURL = await getDownloadURL(storageRef);
             console.log("Download URL:", downloadURL);
 
@@ -151,13 +171,23 @@ export default function ProfileScreen() {
             );
 
             setProfileImage(downloadURL);
-            Alert.alert("Profile picture updated!");
+            Alert.alert("Success!", "Profile picture updated!");
 
         } catch (error) {
-            console.log("Upload error:", error);
-            Alert.alert("Error uploading profile picture", error.message);
+            console.error("Full error:", error);
+            console.error("Error code:", error.code);
+            console.error("Error message:", error.message);
+
+            if (error.code === 'storage/unauthorized') {
+                Alert.alert("Permission Denied", "Please check Firebase Storage rules");
+            } else if (error.code === 'storage/canceled') {
+                console.log("Upload cancelled");
+            } else {
+                Alert.alert("Upload failed", error.message || "Unknown error occurred");
+            }
         }
     };
+    
 
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
