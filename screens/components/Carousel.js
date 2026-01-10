@@ -30,7 +30,8 @@ export default function Carousel() {
 
 const styles = StyleSheet.create({
     scrollView: {
-        marginVertical: 20,
+        marginVertical: 10,
+        height: 140
     },
     scrollContent: {
         paddingHorizontal: 20,
@@ -38,7 +39,7 @@ const styles = StyleSheet.create({
     },
     itemContainer: {
         width: 120,
-        height: 160,
+        height: 100,
         marginRight: 15,
         alignItems: "center",
         justifyContent: "center",
