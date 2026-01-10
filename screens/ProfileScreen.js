@@ -335,6 +335,7 @@ const styles = StyleSheet.create({
         color: "#555",
         marginBottom: 20,
         textAlign: "center",
+        textDecorationLine: "underline"
     },
     headerTitle: {
         fontSize: 22,

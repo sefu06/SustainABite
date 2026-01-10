@@ -1,13 +1,15 @@
 import React from "react";
-import { View, ScrollView, Image, Text, StyleSheet } from "react-native";
+import { View, ScrollView, Image, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Carousel() {
+    const navigation = useNavigation();
     const items = [
         { label: "Avocados", image: require("../../assets/avocado.jpg") },
         { label: "Bananas", image: require("../../assets/banana.jpg") },
         { label: "Cheese", image: require("../../assets/cheese.jpg") },
-        { label: "Apples", image: require("../../assets/apple.png") },
-        { label: "Oranges", image: require("../../assets/apple.png") }, // Add more items
+        { label: "Apples", image: require("../../assets/avocado.jpg") },
+        { label: "Oranges", image: require("../../assets/banana.jpg") }, // Add more items
     ];
 
     return (
@@ -18,11 +20,15 @@ export default function Carousel() {
             style={styles.scrollView}
         >
             {items.map((item, index) => (
-                <View style={styles.itemContainer} key={index}>
+                <TouchableOpacity
+                    key={index}
+                    style={styles.itemContainer}
+                    onPress={() => navigation.navigate("BrowseRequestsScreen")}
+                >
                     <View style={styles.rectangle} />
                     <Image source={item.image} style={styles.itemImage} />
                     <Text style={styles.itemLabel}>{item.label}</Text>
-                </View>
+                </TouchableOpacity>
             ))}
         </ScrollView>
     );

@@ -6,6 +6,7 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
+    Alert,
 } from "react-native";
 
 import { useNavigation } from "@react-navigation/native";
@@ -19,41 +20,32 @@ import {
     query,
     where,
     getDocs,
-    addDoc
+    getDoc,
+    doc,
+    addDoc,
 } from "firebase/firestore";
 
-// Create or fetch an existing chat
+// Create or fetch existing chat
 async function createOrGetChat(otherUserId) {
     const currentUserId = auth.currentUser.uid;
-
     const chatsRef = collection(db, "chats");
 
-    // Find chats where current user is a participant
-    const q = query(
-        chatsRef,
-        where("participants", "array-contains", currentUserId)
-    );
-
+    // Query chats where current user is a participant
+    const q = query(chatsRef, where("participants", "array-contains", currentUserId));
     const snapshot = await getDocs(q);
 
+    // Check if a chat with this other user exists
     let existingChat = null;
-
-    snapshot.forEach((doc) => {
-        const data = doc.data();
+    snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         if (data.participants.includes(otherUserId)) {
-            existingChat = {
-                id: doc.id,
-                ...data
-            };
+            existingChat = { id: docSnap.id, ...data };
         }
     });
 
-    // If chat already exists, return it
-    if (existingChat) {
-        return existingChat.id;
-    }
+    if (existingChat) return existingChat.id;
 
-    // Otherwise create a new chat document
+    // Create new chat
     const newChatRef = await addDoc(chatsRef, {
         participants: [currentUserId, otherUserId],
         createdAt: Date.now(),
@@ -64,86 +56,131 @@ async function createOrGetChat(otherUserId) {
 
 export default function BrowseRequestsScreen() {
     const navigation = useNavigation();
-    const [selectedUser, setSelectedUser] = useState(null);
+    const currentUserId = auth.currentUser?.uid;
+
     const [requests, setRequests] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [profileImages, setProfileImages] = useState({});
+    const [usernames, setUsernames] = useState({});
 
     // Fetch requests
     useEffect(() => {
-        const q = collection(db, "requests");
+        const requestsRef = collection(db, "requests");
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const firebaseRequests = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
+        const unsubscribe = onSnapshot(requestsRef, (snapshot) => {
+            const fetchedRequests = snapshot.docs.map((docSnap) => ({
+                id: docSnap.id,
+                ...docSnap.data(),
             }));
-
-            setRequests(firebaseRequests);
+            setRequests(fetchedRequests);
         });
 
         return unsubscribe;
     }, []);
 
+    // Fetch user info (profile images + usernames)
+    useEffect(() => {
+        if (!currentUserId) return;
+
+        const chatsRef = collection(db, "chats");
+        const unsubscribe = onSnapshot(chatsRef, async (snapshot) => {
+            const userIdsToFetch = new Set();
+
+            snapshot.docs.forEach((docSnap) => {
+                const data = docSnap.data();
+                if (data.participants.includes(currentUserId)) {
+                    data.participants.forEach((uid) => {
+                        if (!usernames[uid]) userIdsToFetch.add(uid);
+                    });
+                }
+            });
+
+            const newUsernames = { ...usernames };
+            const newProfileImages = { ...profileImages };
+
+            for (let uid of userIdsToFetch) {
+                try {
+                    const userDoc = await getDoc(doc(db, "users", uid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        newUsernames[uid] = userData.username || "Unknown";
+                        newProfileImages[uid] = userData.profileImage || null;
+                    } else {
+                        newUsernames[uid] = "Unknown";
+                        newProfileImages[uid] = null;
+                    }
+                } catch (err) {
+                    console.log("Error fetching user:", err);
+                }
+            }
+
+            setUsernames(newUsernames);
+            setProfileImages(newProfileImages);
+        });
+
+        return unsubscribe;
+    }, [currentUserId]);
+
     const toggleSelect = (userId) => {
         setSelectedUser((prev) => (prev === userId ? null : userId));
     };
 
+    const handleConfirm = async () => {
+        if (!selectedUser) {
+            Alert.alert("Please select a user first!");
+            return;
+        }
+
+        const chatId = await createOrGetChat(selectedUser);
+
+        navigation.navigate("ChatScreen", {
+            chatId,
+            currentUserId,
+            otherUserId: selectedUser,
+        });
+    };
+
     return (
         <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-
+            <ScrollView
+                contentContainerStyle={styles.scrollContainer}
+                showsVerticalScrollIndicator={false}
+            >
                 <Image source={require("../assets/apple.png")} style={styles.logo} />
                 <Text style={styles.headerTitle}>Browse Requests!</Text>
 
                 {requests.map((req) => {
                     const isSelected = selectedUser === req.userId;
-
                     return (
                         <TouchableOpacity
                             key={req.id}
-                            style={[
-                                styles.requestBox,
-                                isSelected && styles.selectedBox,
-                            ]}
+                            style={[styles.requestBox, isSelected && styles.selectedBox]}
                             onPress={() => toggleSelect(req.userId)}
                         >
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.Username}>{req.username}</Text>
-                                <Text style={styles.Request}>
-                                    {Array.isArray(req.items)
-                                        ? req.items.join(", ")
-                                        : "No items"}
+                                <Text style={styles.username}>
+                                    {req.username || usernames[req.userId] || "Unknown"}
+                                </Text>
+                                <Text style={styles.requestText}>
+                                    {Array.isArray(req.items) ? req.items.join(", ") : "No items"}
                                 </Text>
                             </View>
 
                             <Image
-                                source={require("../assets/profile.jpg")}
+                                source={
+                                    profileImages[req.userId]
+                                        ? { uri: profileImages[req.userId] }
+                                        : require("../assets/profile.jpg")
+                                }
                                 style={styles.userImage}
                             />
                         </TouchableOpacity>
                     );
                 })}
 
-                {/* Confirm Button */}
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={async () => {
-                        if (!selectedUser) {
-                            alert("Please select a user first!");
-                            return;
-                        }
-
-                        const chatId = await createOrGetChat(selectedUser);
-
-                        navigation.navigate("ChatScreen", {
-                            chatId,
-                            currentUserId: auth.currentUser.uid,
-                            otherUserId: selectedUser,
-                        });
-                    }}
-                >
+                <TouchableOpacity style={styles.button} onPress={handleConfirm}>
                     <Text style={styles.buttonText}>Confirm Selection</Text>
                 </TouchableOpacity>
-
             </ScrollView>
 
             <BottomNavBar />
@@ -152,15 +189,15 @@ export default function BrowseRequestsScreen() {
 }
 
 /* ------------------ Styles ------------------ */
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#faf1df",
     },
     scrollContainer: {
-        paddingVertical: 30,
-        paddingBottom: 100,
+        paddingTop: 30,
+        paddingHorizontal: 20,
+        paddingBottom: 100, // matches nav bar height
         alignItems: "center",
     },
     logo: {
@@ -183,17 +220,17 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 10,
         marginBottom: 10,
-        width: "90%",
+        width: "100%",
     },
     selectedBox: {
         backgroundColor: "#FFC8C8",
     },
-    Username: {
+    username: {
         fontWeight: "600",
         fontSize: 16,
         marginBottom: 3,
     },
-    Request: {
+    requestText: {
         color: "#555",
     },
     userImage: {
@@ -207,7 +244,8 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 25,
         borderRadius: 10,
-        margin: 50,
+        marginTop: 20,
+        marginBottom: 40,
         alignSelf: "center",
     },
     buttonText: {
