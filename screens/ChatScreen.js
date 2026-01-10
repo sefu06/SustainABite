@@ -60,25 +60,25 @@ export default function ChatScreen({ route }) {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <KeyboardAvoidingView
-                style={{ flex: 1 }}
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                keyboardVerticalOffset={90}
-            >
-                <View style={styles.container}>
-                    {/* Header with profile picture */}
-                    <View style={styles.banner}>
-                        <Image
-                            source={
-                                otherProfileImage
-                                    ? { uri: otherProfileImage }
-                                    : require("../assets/profile.jpg")
-                            }
-                            style={styles.bannerProfileImage}
-                        />
-                        <Text style={styles.bannerText}>{otherUsername}</Text>
-                    </View>
+            <View style={styles.container}>
+                {/* Header with profile picture */}
+                <View style={styles.banner}>
+                    <Image
+                        source={
+                            otherProfileImage
+                                ? { uri: otherProfileImage }
+                                : require("../assets/profile.jpg")
+                        }
+                        style={styles.bannerProfileImage}
+                    />
+                    <Text style={styles.bannerText}>{otherUsername}</Text>
+                </View>
 
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? 45 : 45}
+                >
                     <FlatList
                         data={messages}
                         keyExtractor={(item) => item.id}
@@ -109,8 +109,8 @@ export default function ChatScreen({ route }) {
                             <Text style={styles.sendText}>Send</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-            </KeyboardAvoidingView>
+                </KeyboardAvoidingView>
+            </View>
             <BottomNavBar />
         </SafeAreaView>
     );
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#faf1df",
-        paddingBottom: 40
+        paddingBottom: 35, // Space for BottomNavBar
     },
     banner: {
         flexDirection: "row",
@@ -147,7 +147,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: "#ddd",
         marginRight: 14,
-       
     },
     bannerText: {
         fontSize: 18,
