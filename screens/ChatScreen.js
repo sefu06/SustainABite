@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image, KeyboardAvoidingView, Platform } from "react-native";
 import { db } from "../firebase";
 import { collection, addDoc, onSnapshot, orderBy, query, serverTimestamp, getDoc, doc } from "firebase/firestore";
 import BottomNavBar from "./components/BottomNavBar";
+import { SafeAreaView } from "react-native";
 
 export default function ChatScreen({ route }) {
     const { currentUserId, otherUserId } = route.params;
@@ -11,6 +12,7 @@ export default function ChatScreen({ route }) {
     const [messages, setMessages] = useState([]);
     const [text, setText] = useState("");
     const [otherUsername, setOtherUsername] = useState("...");
+    const [otherProfileImage, setOtherProfileImage] = useState(null);
 
     useEffect(() => {
         const messagesRef = collection(db, "chats", chatId, "messages");
@@ -22,29 +24,27 @@ export default function ChatScreen({ route }) {
                 ...doc.data(),
             }));
             setMessages(msgs);
-        
         });
 
         return unsubscribe;
     }, []);
 
-
     useEffect(() => {
-        async function fetchUsername() {
+        async function fetchUserData() {
             const userRef = doc(db, "users", otherUserId);
             const snap = await getDoc(userRef);
 
             if (snap.exists()) {
-                setOtherUsername(snap.data().username);
+                const userData = snap.data();
+                setOtherUsername(userData.username || "Unknown");
+                setOtherProfileImage(userData.profileImage || null);
             } else {
                 setOtherUsername("Unknown");
             }
         }
 
-        fetchUsername();
+        fetchUserData();
     }, []);
-
-    
 
     const sendMessage = async () => {
         if (text.trim().length === 0) return;
@@ -59,86 +59,151 @@ export default function ChatScreen({ route }) {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.banner}>Chat with: {otherUsername}</Text>
-            <FlatList
-                data={messages}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    <Text
-                        style={[
-                            styles.message,
-                            item.senderId === currentUserId
-                                ? styles.myMessage
-                                : styles.theirMessage,
-                        ]}
-                    >
-                        {item.text}
-                    </Text>
-                )}
-            />
+        <SafeAreaView style={styles.safeArea}>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={90}
+            >
+                <View style={styles.container}>
+                    {/* Header with profile picture */}
+                    <View style={styles.banner}>
+                        <Image
+                            source={
+                                otherProfileImage
+                                    ? { uri: otherProfileImage }
+                                    : require("../assets/profile.jpg")
+                            }
+                            style={styles.bannerProfileImage}
+                        />
+                        <Text style={styles.bannerText}>{otherUsername}</Text>
+                    </View>
 
-            <View style={styles.inputRow}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Type a message..."
-                    value={text}
-                    onChangeText={setText}
-                />
+                    <FlatList
+                        data={messages}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={styles.messagesList}
+                        renderItem={({ item }) => (
+                            <Text
+                                style={[
+                                    styles.message,
+                                    item.senderId === currentUserId
+                                        ? styles.myMessage
+                                        : styles.theirMessage,
+                                ]}
+                            >
+                                {item.text}
+                            </Text>
+                        )}
+                    />
 
-                <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-                    <Text style={styles.sendText}>Send</Text>
-                </TouchableOpacity>
-            </View>
-            <BottomNavBar/>
-        </View>
+                    <View style={styles.inputRow}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Type a message..."
+                            value={text}
+                            onChangeText={setText}
+                        />
+
+                        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+                            <Text style={styles.sendText}>Send</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </KeyboardAvoidingView>
+            <BottomNavBar />
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#fff", padding: 10, paddingBottom: 80 },
-    message: {
-        padding: 10,
-        marginVertical: 5,
+    safeArea: {
+        flex: 1,
+        backgroundColor: "#faf1df",
+    },
+    container: {
+        flex: 1,
+        backgroundColor: "#faf1df",
+        paddingBottom: 40
+    },
+    banner: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 15,
+        margin: 10,
         borderRadius: 10,
+        backgroundColor: "#fff",
+        borderBottomWidth: 1,
+        borderBottomColor: "#e0e0e0",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    bannerProfileImage: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: "#ddd",
+        marginRight: 14,
+       
+    },
+    bannerText: {
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#333",
+    },
+    messagesList: {
+        padding: 20,
+        paddingBottom: 10,
+    },
+    message: {
+        padding: 12,
+        marginVertical: 5,
+        borderRadius: 15,
         maxWidth: "70%",
     },
     myMessage: {
-        backgroundColor: "#FFCDD2",
+        backgroundColor: "#FF9A9A",
         alignSelf: "flex-end",
+        borderBottomRightRadius: 5,
     },
     theirMessage: {
-        backgroundColor: "#E0E0E0",
+        backgroundColor: "#fff",
         alignSelf: "flex-start",
+        borderBottomLeftRadius: 5,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
     inputRow: {
         flexDirection: "row",
         alignItems: "center",
+        padding: 15,
+        backgroundColor: "#fff",
         borderTopWidth: 1,
-        borderColor: "#ccc",
-        paddingTop: 10,
+        borderTopColor: "#e0e0e0",
     },
     input: {
         flex: 1,
-        padding: 10,
+        padding: 12,
         backgroundColor: "#f5f5f5",
-        borderRadius: 10,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: "#e0e0e0",
     },
     sendButton: {
-        padding: 10,
+        padding: 12,
+        paddingHorizontal: 20,
         marginLeft: 10,
         backgroundColor: "#FF9A9A",
-        borderRadius: 10,
+        borderRadius: 20,
     },
-    sendText: { fontWeight: "bold" },
-    banner: {
-        fontSize: 18,
-        fontWeight: "700",
-        padding: 10,
-        backgroundColor: "#FFE5E5",
-        textAlign: "center",
-        marginBottom: 10,
-        borderRadius: 10,
+    sendText: {
+        fontWeight: "bold",
+        color: "#fff",
     },
-    
 });

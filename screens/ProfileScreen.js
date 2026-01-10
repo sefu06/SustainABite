@@ -23,6 +23,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import BottomNavBar from "./components/BottomNavBar";
 import { useProfileImage } from "./components/ProfileImageContext";
+import { SafeAreaView } from "react-native";
 
 export default function ProfileScreen() {
     const [myRequests, setMyRequests] = useState([]);
@@ -225,6 +226,7 @@ export default function ProfileScreen() {
     };
 
     return (
+        <SafeAreaView style = {styles.safeArea}>
         <View style={{ flex: 1, backgroundColor: "#faf1df" }}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <TouchableOpacity onPress={handlePickImage}>
@@ -303,12 +305,18 @@ export default function ProfileScreen() {
                 <View style={{ height: 100 }} />
             </ScrollView>
 
+           
+            </View>
             <BottomNavBar />
-        </View>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: "#faf1df",
+    },
     scrollContainer: {
         flexGrow: 1,
         alignItems: "center",
